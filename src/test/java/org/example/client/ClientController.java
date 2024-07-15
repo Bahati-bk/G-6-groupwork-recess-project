@@ -46,8 +46,6 @@ public class ClientController {
         return this.user;
     }
 
-    // Method to handle challenge attempt logic based on server response
-
 
     // Main method to execute the appropriate action based on the command in the response data
     public User exec(String responseData) {
