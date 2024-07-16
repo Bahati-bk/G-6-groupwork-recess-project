@@ -1,13 +1,12 @@
 package org.example.client;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class ClientController {
+public class ClientHandler {
     User user;
 
     // Constructor to initialize the ClientController with a User object
-    public ClientController(User user) {
+    public ClientHandler(User user) {
         this.user = user;
     }
 

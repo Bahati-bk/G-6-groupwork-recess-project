@@ -80,7 +80,7 @@ public class DatabaseConnection {
     }
 
 
-    // Method to retrieve representative details from the database by regNo
+    // Method to retrieve representative details from the database by registration number
     public ResultSet getRepresentative(String registration_number) throws SQLException {
         String sqlCommand = "SELECT * FROM `schools` WHERE registration_number = " + registration_number + ";";
         return this.statement.executeQuery(sqlCommand);
