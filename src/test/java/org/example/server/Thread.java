@@ -11,11 +11,11 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
-public class ServerThread {
+public class Thread {
     private Socket socket;
 
     // Constructor to initialize ServerThread with a socket
-    public ServerThread(Socket socket) {
+    public Thread(Socket socket) {
         this.socket = socket;
     }
 

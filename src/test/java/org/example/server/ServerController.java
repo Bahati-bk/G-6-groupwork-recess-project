@@ -23,8 +23,8 @@ public class ServerController {
 
         // Extract username and email from tokens
         JSONArray tokens = obj.getJSONArray("tokens");
-        String username = tokens.get(1).toString();
-        String email = tokens.get(2).toString();
+        String username = tokens.getString(1);
+        String email = tokens.getString(2);
 
         // Prepare client response JSON object
         JSONObject clientResponse = new JSONObject();
@@ -93,13 +93,13 @@ public class ServerController {
         // Extract registration details from tokens
         JSONArray tokens = obj.getJSONArray("tokens");
         JSONObject participantObj = new JSONObject();
-        participantObj.put("username", tokens.get(1));
-        participantObj.put("firstname", tokens.get(2));
-        participantObj.put("lastname", tokens.get(3));
-        participantObj.put("emailAddress", tokens.get(4));
-        participantObj.put("dob", tokens.get(5));
-        participantObj.put("registration_number", tokens.get(6));
-        participantObj.put("imagePath", tokens.get(7));
+        participantObj.put("username", tokens.getString(1));
+        participantObj.put("firstname", tokens.getString(2));
+        participantObj.put("lastname", tokens.getString(3));
+        participantObj.put("emailAddress", tokens.getString(4));
+        participantObj.put("dob", tokens.getString(5));
+        participantObj.put("registration_number", tokens.getString(6));
+        participantObj.put("imagePath", tokens.getString(7));
         participantObj.put("tokenized_image", obj.getJSONObject("tokenized_image"));
 
         // Prepare client response JSON object
@@ -126,7 +126,7 @@ public class ServerController {
         if (rs.next()) {
             representativeEmail = rs.getString("representative_email");
         } else {
-            // If no representative found for given regNo
+            // If no representative found for given registration number
             clientResponse.put("status", false);
             clientResponse.put("reason", "The school registration number does not match registered school numbers");
             return clientResponse;
@@ -152,7 +152,7 @@ public class ServerController {
         return clientResponse;
     }
 
-    //Method for storing images
+    // Method for storing images
     private static void saveProfileImage(JSONObject s, String pic_path) {
         try (FileOutputStream fileOutputStream = new FileOutputStream("C:\\xampp\\htdocs\\G_6_RECESS-2\\public\\light-bootstrap\\img\\" + pic_path)) {
             // Debug: Print the keys in the JSON object
@@ -165,8 +165,10 @@ public class ServerController {
                 return;
             }
 
+            // Extract the "data" array
             JSONArray arr = s.getJSONArray("data");
 
+            // Iterate over the array and save each buffer
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject o = arr.getJSONObject(i);
 
@@ -176,11 +178,12 @@ public class ServerController {
                     continue;
                 }
 
+                // Convert JSON array to byte array and write to file
                 byte[] buffer = jsonArrayToBytes(o.getJSONArray("buffer"));
                 fileOutputStream.write(buffer, 0, o.getInt("size"));
             }
 
-            System.out.println("file saved as " + pic_path);
+            System.out.println("File saved as " + pic_path);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -190,6 +193,7 @@ public class ServerController {
         }
     }
 
+    // Helper method to convert JSON array to byte array
     public static byte[] jsonArrayToBytes(JSONArray array) {
         byte[] bytes = new byte[array.length()];
         for (int i = 0; i < array.length(); i++) {
@@ -198,9 +202,9 @@ public class ServerController {
         return bytes;
     }
 
-
     // Main method to run appropriate logic based on command received
     public JSONObject run() throws IOException, SQLException, ClassNotFoundException, MessagingException {
+        // Switch based on the command received in the JSON object
         switch (this.obj.get("command").toString()) {
             case "login":
                 // Call login logic
@@ -220,4 +224,3 @@ public class ServerController {
         }
     }
 }
-
