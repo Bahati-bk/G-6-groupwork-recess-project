@@ -60,7 +60,6 @@ public class ObjectHandler {
     }
 
 
-
     //Method where image is broken down into 4kb arrays
     private static JSONObject tokenizeImage(String path) {
         JSONObject jsonObject = new JSONObject();
@@ -94,6 +93,21 @@ public class ObjectHandler {
         }
         return jsonObject;
     }
+
+
+    // Method to handle confirmation process
+    public String confirm(String[] arr) {
+        // Create JSON object for confirm command
+        JSONObject obj = new JSONObject();
+        obj.put("command", "confirm");
+        obj.put("username", arr[2]);
+        obj.put("registration_number", this.user.registration_number);
+        obj.put("confirm", (arr[1].toLowerCase().equals("yes")) ? true : false);
+        obj.put("tokens", arr);
+
+        return obj.toString(4);
+    }
+
 
 
     // Method to handle logout process
@@ -130,6 +144,9 @@ public class ObjectHandler {
             switch (tokens[0]) {
                 case "logout":
                     return this.logout();
+
+                case "confirm":
+                    return this.confirm(tokens);
 
                 default:
                     return "Invalid school representative command";

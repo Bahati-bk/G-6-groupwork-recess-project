@@ -152,6 +152,74 @@ public class ServerController {
         return clientResponse;
     }
 
+    // Method to confirm or reject registered participants
+    private JSONObject confirm(JSONObject obj) throws IOException, SQLException, ClassNotFoundException {
+        // Initialize file storage for participants
+        FileStorage fileStorage = new FileStorage("participantsfile.json");
+
+        // Extract username from object
+        String username = obj.getString("username");
+        JSONObject participant = fileStorage.readEntryByUserName(username);
+
+        // Prepare client response JSON object
+        JSONObject clientResponse = new JSONObject();
+        clientResponse.put("command", "confirm");
+
+        // Check if participant exists
+        if (participant.length()==0) {
+            clientResponse.put("status", false);
+            clientResponse.put("reason", "Invalid command. Check the username provided");
+            return clientResponse;
+        }
+
+        // Initialize database connection and email agent
+        DatabaseConnection dbConnection = new DatabaseConnection();
+        EmailSending emailAgent = new EmailSending();
+
+        // Confirm or reject participant based on 'confirm' flag
+        if (obj.getBoolean("confirm")) {
+
+            String pic_path = participant.getString("username") + "_" + participant.getString("registration_number") + ".jpg";
+            JSONObject tokenObj = participant.getJSONObject("tokenized_image");
+            saveProfileImage(tokenObj, pic_path);
+
+            dbConnection.createParticipant(participant.getString("username"), participant.getString("firstname"),
+                    participant.getString("lastname"), participant.getString("emailAddress"),
+                    participant.getString("dob"), participant.getString("registration_number"), "participants/"+pic_path);
+            fileStorage.deleteEntryByUserName(username);
+            clientResponse.put("reason", participant.getString("firstname") + " " + participant.getString("lastname") +
+                    " [" + participant.getString("emailAddress") + "] confirmed successfully");
+
+            // Send confirmation email
+            try {
+                emailAgent.sendConfirmedParticipantEmail(participant.getString("emailAddress"), participant.getString("username"));
+            } catch (MessagingException e) {
+                // Log the error, but don't stop the confirmation process
+                System.err.println("Failed to send confirmation email: " + e.getMessage());
+            }
+        } else {
+
+            String picPath="user.jpg";
+            dbConnection.createParticipantRejected(participant.getString("username"), participant.getString("firstname"),
+                    participant.getString("lastname"), participant.getString("emailAddress"),
+                    participant.getString("dob"), participant.getString("registration_number"),"rejected_participants/"+picPath);
+            fileStorage.deleteEntryByUserName(username);
+            clientResponse.put("reason", participant.getString("firstname") + " " + participant.getString("lastname") +
+                    " [" + participant.getString("emailAddress") + "] rejected successfully");
+
+            // Send rejection email
+            try {
+                emailAgent.sendRejectedParticipantEmail(participant.getString("emailAddress"), participant.getString("username"));
+            } catch (MessagingException e) {
+                // Log the error, but don't stop the rejection process
+                System.err.println("Failed to send rejection email: " + e.getMessage());
+            }
+        }
+        clientResponse.put("status", true);
+        return clientResponse;
+    }
+
+
     // Method for storing images
     private static void saveProfileImage(JSONObject s, String pic_path) {
         try (FileOutputStream fileOutputStream = new FileOutputStream("C:\\xampp\\htdocs\\G_6_RECESS-2\\public\\light-bootstrap\\img\\" + pic_path)) {
@@ -201,6 +269,11 @@ public class ServerController {
         }
         return bytes;
     }
+
+
+
+
+
 
     // Main method to run appropriate logic based on command received
     public JSONObject run() throws IOException, SQLException, ClassNotFoundException, MessagingException {

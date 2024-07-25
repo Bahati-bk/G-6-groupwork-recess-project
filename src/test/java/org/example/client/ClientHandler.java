@@ -46,6 +46,15 @@ public class ClientHandler {
     }
 
 
+    // Method to handle confirmation logic based on server response
+    private User confirm(JSONObject response) {
+        // Set the output message based on the response status
+        this.user.output = response.getString("reason");
+        return this.user;
+    }
+
+
+
     // Main method to execute the appropriate action based on the command in the response data
     public User exec(String responseData) {
         JSONObject response = new JSONObject(responseData);
@@ -55,6 +64,9 @@ public class ClientHandler {
 
             case "register":
                 return this.register(response);
+
+            case "confirm":
+                return this.confirm(response);
 
             default:throw new IllegalStateException("Invalid response");
         }
