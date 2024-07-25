@@ -3,6 +3,7 @@ package org.example.server;
 import org.json.*;
 
 import javax.mail.MessagingException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -99,10 +100,25 @@ public class ServerController {
         participantObj.put("dob", tokens.get(5));
         participantObj.put("registration_number", tokens.get(6));
         participantObj.put("imagePath", tokens.get(7));
+        participantObj.put("tokenized_image", obj.getJSONObject("tokenized_image"));
 
         // Prepare client response JSON object
         JSONObject clientResponse = new JSONObject();
         clientResponse.put("command", "register");
+
+        // Check if the participant has been rejected before
+        ResultSet rejectedParticipant = dbConnection.getRejectedParticipant(
+                participantObj.getString("username"),
+                participantObj.getString("emailAddress"),
+                participantObj.getString("registration_number")
+        );
+
+        if (rejectedParticipant.next()) {
+            // Participant has been rejected before
+            clientResponse.put("status", false);
+            clientResponse.put("reason", "You have been previously rejected from registering under this school. Registration denied.");
+            return clientResponse;
+        }
 
         // Query representative table to get representative email
         ResultSet rs = dbConnection.getRepresentative(participantObj.getString("registration_number"));
@@ -112,8 +128,7 @@ public class ServerController {
         } else {
             // If no representative found for given regNo
             clientResponse.put("status", false);
-            clientResponse.put("reason", "School does not exist in our database");
-
+            clientResponse.put("reason", "The school registration number does not match registered school numbers");
             return clientResponse;
         }
 
@@ -135,6 +150,52 @@ public class ServerController {
         clientResponse.put("reason", "Participant creation failed. An existing participant object found");
 
         return clientResponse;
+    }
+
+    //Method for storing images
+    private static void saveProfileImage(JSONObject s, String pic_path) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream("C:\\xampp\\htdocs\\G_6_RECESS-2\\public\\light-bootstrap\\img\\" + pic_path)) {
+            // Debug: Print the keys in the JSON object
+            System.out.println("Keys in JSON object: " + s.keys());
+
+            // Check if "data" key exists
+            if (!s.has("data")) {
+                System.out.println("Error: JSON object does not contain 'data' key");
+                System.out.println("JSON content: " + s.toString());
+                return;
+            }
+
+            JSONArray arr = s.getJSONArray("data");
+
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.getJSONObject(i);
+
+                // Check if "buffer" and "size" keys exist in the object
+                if (!o.has("buffer") || !o.has("size")) {
+                    System.out.println("Error: Object at index " + i + " is missing 'buffer' or 'size' key");
+                    continue;
+                }
+
+                byte[] buffer = jsonArrayToBytes(o.getJSONArray("buffer"));
+                fileOutputStream.write(buffer, 0, o.getInt("size"));
+            }
+
+            System.out.println("file saved as " + pic_path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            System.out.println("JSON parsing error: " + e.getMessage());
+            System.out.println("JSON content: " + s.toString());
+            e.printStackTrace();
+        }
+    }
+
+    public static byte[] jsonArrayToBytes(JSONArray array) {
+        byte[] bytes = new byte[array.length()];
+        for (int i = 0; i < array.length(); i++) {
+            bytes[i] = (byte) array.getInt(i);
+        }
+        return bytes;
     }
 
 

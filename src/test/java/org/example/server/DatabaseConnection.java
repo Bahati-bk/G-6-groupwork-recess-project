@@ -7,7 +7,7 @@ import java.sql.*;
 
 public class DatabaseConnection {
     // Database connection parameters
-    String url = "jdbc:mysql://localhost:3306/mtc_challenge_comp";
+    String url = "jdbc:mysql://localhost:3306/mtc_challenge_comp20";
     String username = "root";
     String password = "";
     Connection connection;
@@ -64,19 +64,13 @@ public class DatabaseConnection {
         }
     }
 
-    // Method to create a rejected participant entry in the database
-    public void createParticipantRejected(String username, String firstname, String lastname, String emailAddress, String dob, String registration_number, String imagePath) throws SQLException {
-        String sql = "INSERT INTO `rejectedparticipant` (`username`, `firstname`, `lastname`, `emailAddress`, `dob`, `registration_number`, `imagePath`) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = this.connection.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, firstname);
-            stmt.setString(3, lastname);
-            stmt.setString(4, emailAddress);
-            stmt.setString(5, dob);
-            stmt.setString(6, registration_number);
-            stmt.setString(7, imagePath);
-            stmt.executeUpdate();
-        }
+    public ResultSet getRejectedParticipant(String username, String email, String registrationNumber) throws SQLException {
+        String query = "SELECT * FROM rejectedparticipant WHERE username = ? AND emailAddress = ? AND registration_number = ?";
+        PreparedStatement pstmt = connection.prepareStatement(query);
+        pstmt.setString(1, username);
+        pstmt.setString(2, email);
+        pstmt.setString(3, registrationNumber);
+        return pstmt.executeQuery();
     }
 
 
